@@ -1,4 +1,4 @@
-# Teclado RGB do Avell Storm 560
+# Controlador do Teclado LED — Avell Storm 560
 
 Fork do **tuxedo-drivers** da TUXEDO Computers com suporte ao teclado RGB do **Avell Storm 560** (chassi Tongfang/Uniwill) em Linux Mint, Ubuntu e derivados.
 
@@ -12,7 +12,7 @@ cd tuxedo-drivers-avell-560
 bash instalar-tudo.sh
 ```
 
-Reinicie depois. O script compila os módulos, instala o driver, grava a configuração persistente (`kbd_type_override=6`) e instala a janela **Teclado RGB** com as permissões de acesso.
+Reinicie depois. O script compila os módulos, instala o driver, grava a configuração persistente (`kbd_type_override=6`) e instala o **Controlador do Teclado LED** com as permissões de acesso.
 
 Para remover tudo depois:
 
@@ -27,7 +27,7 @@ bash desinstalar.sh
 | Ligar / desligar (`Fn` + `*`) | Funciona |
 | Brilho (`Fn` + `+` / `Fn` + `-`) | Funciona, em 6 degraus visíveis |
 | Troca de cor (`Fn` + `/`) | Funciona, percorre 8 cores |
-| Janela gráfica "Teclado RGB" | Funciona |
+| Controlador do Teclado LED | Funciona |
 | Cor RGB arbitrária | Funciona |
 | Efeitos animados | Em software, com a janela aberta |
 | Efeitos nativos do firmware | Aceitos, mas ignorados neste chassi |

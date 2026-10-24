@@ -31,4 +31,4 @@ sudo systemctl enable --now avell-kbd-rgb-perms.service || true
 sudo /usr/local/libexec/avell-kbd-rgb-perms || true
 
 echo
-echo "Pronto. Abra 'Teclado RGB' no menu ou rode: teclado-rgb"
+echo "Pronto. Abra 'Controlador do Teclado LED — Avell Storm 560' no menu ou rode: teclado-rgb"

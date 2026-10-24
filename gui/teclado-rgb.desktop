@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Teclado RGB
-GenericName=Iluminação do teclado
-Comment=Controlar brilho e cor da iluminação RGB do teclado
+Name=Controlador do Teclado LED — Avell Storm 560
+GenericName=Iluminação RGB do teclado
+Comment=Controle de brilho, cor e efeitos do teclado RGB do Avell Storm 560
 Exec=/usr/local/bin/teclado-rgb
 Icon=input-keyboard
 Terminal=false
 Categories=Settings;HardwareSettings;
-Keywords=teclado;rgb;led;brilho;cor;backlight;
+Keywords=teclado;teclado led;controlador;rgb;led;brilho;cor;backlight;avell;storm;560;

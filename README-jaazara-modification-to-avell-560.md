@@ -1,4 +1,4 @@
-# Teclado RGB do Avell Storm 560 no Linux
+# Controlador do Teclado LED — Avell Storm 560 no Linux
 
 Driver de kernel e aplicativo gráfico para controlar a iluminação RGB do teclado do **Avell Storm 560** (chassi Tongfang/Uniwill) em Linux Mint, Ubuntu e derivados.
 
@@ -15,7 +15,7 @@ Este repositório é um fork do [tuxedo-drivers](https://gitlab.com/tuxedocomput
 | Ligar / desligar (`Fn` + `*`) | Funciona |
 | Aumentar / diminuir brilho (`Fn` + `+` / `Fn` + `-`) | Funciona, em 6 degraus visíveis |
 | Trocar a cor (`Fn` + `/`) | Funciona, percorre 8 cores |
-| Janela gráfica "Teclado RGB" | Funciona |
+| Controlador do Teclado LED | Funciona |
 | Cor RGB arbitrária (seletor de cores) | Funciona |
 | Efeitos animados (respiração, arco-íris, flash, onda) | Funcionam em software, com a janela aberta |
 | Efeitos nativos do firmware | O firmware aceita o comando, mas **ignora** todos os modos |
@@ -88,9 +88,9 @@ O `instalar.sh` grava `/etc/modules-load.d/avell-rgb.conf` com `tuxedo_keyboard`
 
 ---
 
-## Usando a janela
+## Usando o Controlador do Teclado LED
 
-Abra **Teclado RGB** no menu do sistema ou rode:
+Abra **Controlador do Teclado LED — Avell Storm 560** no menu do sistema ou rode:
 
 ```bash
 teclado-rgb
@@ -200,7 +200,7 @@ src/
   uniwill_leds.h           LEDs do Uniwill e delegação para o Clevo
   uniwill_wmi.c            transporte WMI do Uniwill
 gui/
-  teclado-rgb.py           janela GTK 3
+  teclado-rgb.py           controlador do teclado LED (GTK 3)
   teclado-rgb.desktop      atalho no menu
   avell-kbd-rgb-perms      helper que ajusta as permissões do sysfs
   avell-kbd-rgb-perms.service  oneshot que chama o helper no boot

@@ -28,6 +28,8 @@ F_EFEITO = "/sys/devices/platform/tuxedo_keyboard/kbd_effect"
 HELPER_PERMISSOES = "/usr/local/libexec/avell-kbd-rgb-perms"
 
 # Informações exibidas na aba "Sobre". Mantenha em sincronia com o README.
+NOME_APLICATIVO = "Controlador do Teclado LED"
+MODELO = "Avell Storm 560"
 VERSAO = "1.0.0"
 DATA_ATUALIZACAO = "24 de outubro de 2026"
 URL_PROJETO = "https://github.com/alexandrejazara/tuxedo-drivers-avell-560"
@@ -100,7 +102,7 @@ def desenhar_cor(area, contexto, cor):
 
 class JanelaRGB(Gtk.Window):
     def __init__(self):
-        super().__init__(title="Teclado RGB")
+        super().__init__(title="%s — %s" % (NOME_APLICATIVO, MODELO))
         self.set_border_width(12)
         self.set_default_size(440, 430)
         self.set_position(Gtk.WindowPosition.CENTER)
@@ -240,9 +242,14 @@ class JanelaRGB(Gtk.Window):
         caixa.set_border_width(12)
 
         titulo = Gtk.Label()
-        titulo.set_markup("<b>Teclado RGB — Avell Storm 560</b>")
+        titulo.set_markup("<b>%s</b>" % NOME_APLICATIVO)
         titulo.set_xalign(0)
         caixa.pack_start(titulo, False, False, 0)
+
+        modelo = Gtk.Label(label=MODELO)
+        modelo.set_xalign(0)
+        modelo.get_style_context().add_class("dim-label")
+        caixa.pack_start(modelo, False, False, 0)
 
         resumo = Gtk.Label(
             label="Controle da iluminação RGB do teclado em notebooks "

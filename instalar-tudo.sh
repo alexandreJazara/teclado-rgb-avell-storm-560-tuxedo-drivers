@@ -85,5 +85,5 @@ titulo "Concluído"
 if [ "$MODO" != "--gui" ]; then
 	echo "Reinicie o computador para carregar a versão nova do driver."
 else
-	echo "Feche e abra a janela 'Teclado RGB' para usar a versão nova."
+	echo "Feche e abra o 'Controlador do Teclado LED' para usar a versão nova."
 fi
