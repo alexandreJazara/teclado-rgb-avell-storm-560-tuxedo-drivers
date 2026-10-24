@@ -5,6 +5,8 @@ set -eu
 
 cd "$(dirname "$0")"
 
+VERSAO="1.1.0"
+
 USUARIO="${SUDO_USER:-$USER}"
 
 if ! python3 -c "import gi; gi.require_version('Gtk', '3.0')" 2>/dev/null; then
@@ -35,4 +37,5 @@ command -v update-desktop-database >/dev/null 2>&1 && \
 	sudo update-desktop-database /usr/share/applications || true
 
 echo
-echo "Pronto. Abra 'Controlador do Teclado LED — Avell Storm 560' no menu ou rode: teclado-rgb"
+echo "Pronto. Controlador do Teclado LED — Avell Storm 560 $VERSAO instalado."
+echo "Abra pelo menu ou rode: teclado-rgb"

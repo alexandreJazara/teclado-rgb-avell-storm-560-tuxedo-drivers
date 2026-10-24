@@ -15,6 +15,8 @@ set -eu
 
 cd "$(dirname "$0")"
 
+VERSAO="1.1.0"
+
 MODO="${1:-tudo}"
 
 case "$MODO" in
@@ -47,6 +49,7 @@ verificar() {
 	fi
 }
 
+titulo "Controlador do Teclado LED — Avell Storm 560 $VERSAO"
 titulo "Verificando o ambiente"
 verificar "/lib/modules/$KREL/build/Makefile" "headers do kernel $KREL"
 command -v make >/dev/null 2>&1 && echo "  [ok] make" || { echo "  [faltando] make"; FALHAS=1; }

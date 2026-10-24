@@ -10,9 +10,12 @@ set -eu
 
 cd "$(dirname "$0")"
 
+VERSAO="1.1.0"
+
 KREL="$(uname -r)"
 DEST="/lib/modules/$KREL/updates/src"
 
+echo "Driver do teclado RGB — Avell Storm 560 (versão $VERSAO)"
 echo "Kernel: $KREL"
 echo "Destino: $DEST"
 
