@@ -277,9 +277,15 @@ class JanelaRGB(Gtk.Window):
         rotulo_projeto.set_xalign(0)
         caixa.pack_start(rotulo_projeto, False, False, 0)
 
-        link = Gtk.LinkButton.new_with_label(URL_PROJETO, URL_PROJETO)
+        link = Gtk.LinkButton.new_with_label(URL_PROJETO, "Abrir o projeto no GitHub")
         link.set_halign(Gtk.Align.START)
         caixa.pack_start(link, False, False, 0)
+
+        endereco = Gtk.Label(label=URL_PROJETO)
+        endereco.set_line_wrap(True)
+        endereco.set_xalign(0)
+        endereco.get_style_context().add_class("dim-label")
+        caixa.pack_start(endereco, False, False, 0)
 
         nota = Gtk.Label()
         nota.set_markup(
