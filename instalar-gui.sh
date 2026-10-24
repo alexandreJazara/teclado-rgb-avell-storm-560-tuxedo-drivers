@@ -30,5 +30,9 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now avell-kbd-rgb-perms.service || true
 sudo /usr/local/libexec/avell-kbd-rgb-perms || true
 
+# Atualiza o cache do menu para o nome novo aparecer na busca.
+command -v update-desktop-database >/dev/null 2>&1 && \
+	sudo update-desktop-database /usr/share/applications || true
+
 echo
 echo "Pronto. Abra 'Controlador do Teclado LED — Avell Storm 560' no menu ou rode: teclado-rgb"
