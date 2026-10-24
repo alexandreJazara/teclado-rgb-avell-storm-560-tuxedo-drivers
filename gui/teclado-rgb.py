@@ -27,10 +27,14 @@ F_EFEITO = "/sys/devices/platform/tuxedo_keyboard/kbd_effect"
 
 HELPER_PERMISSOES = "/usr/local/libexec/avell-kbd-rgb-perms"
 
+# O Cinnamon guarda o estado do touchpad nesta chave; o Fn+F1 mexe nela.
+SCHEMA_TOUCHPAD = "org.cinnamon.desktop.peripherals.touchpad"
+CHAVE_TOUCHPAD = "send-events"
+
 # Informações exibidas na aba "Sobre". Mantenha em sincronia com o README.
 NOME_APLICATIVO = "Controlador do Teclado LED"
 MODELO = "Avell Storm 560"
-VERSAO = "1.2.0"
+VERSAO = "1.3.0"
 DATA_ATUALIZACAO = "24 de outubro de 2026"
 URL_PROJETO = "https://github.com/alexandreJazara/teclado-rgb-avell-storm-560-tuxedo-drivers"
 AUTOR = "Alexandre Jazara"
@@ -93,6 +97,61 @@ def ler_texto(caminho):
         return None
 
 
+def _executar(comando, timeout=3):
+    try:
+        return subprocess.run(
+            comando, capture_output=True, text=True, timeout=timeout
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def _nome_touchpad_xinput():
+    resultado = _executar(["xinput", "list", "--name-only"])
+    if resultado is None or resultado.returncode != 0:
+        return None
+    for linha in resultado.stdout.splitlines():
+        if "touchpad" in linha.lower():
+            return linha.strip()
+    return None
+
+
+def ler_touchpad_ligado():
+    """Estado do touchpad: True/False, ou None se não foi possível ler."""
+    resultado = _executar(["gsettings", "get", SCHEMA_TOUCHPAD, CHAVE_TOUCHPAD])
+    if resultado is not None and resultado.returncode == 0:
+        valor = resultado.stdout.strip().strip("'")
+        return valor != "disabled"
+
+    nome = _nome_touchpad_xinput()
+    if nome is None:
+        return None
+    resultado = _executar(["xinput", "list-props", nome])
+    if resultado is None or resultado.returncode != 0:
+        return None
+    for linha in resultado.stdout.splitlines():
+        if "Device Enabled" in linha:
+            return linha.rstrip().endswith("1")
+    return None
+
+
+def definir_touchpad(ligado):
+    """Liga/desliga o touchpad. Retorna True se o comando foi aceito."""
+    valor = "enabled" if ligado else "disabled"
+    resultado = _executar(
+        ["gsettings", "set", SCHEMA_TOUCHPAD, CHAVE_TOUCHPAD, valor]
+    )
+    if resultado is not None and resultado.returncode == 0:
+        return True
+
+    nome = _nome_touchpad_xinput()
+    if nome is None:
+        return False
+    acao = "enable" if ligado else "disable"
+    resultado = _executar(["xinput", acao, nome])
+    return resultado is not None and resultado.returncode == 0
+
+
 def desenhar_cor(area, contexto, cor):
     contexto.set_source_rgb(cor[0] / 255, cor[1] / 255, cor[2] / 255)
     contexto.rectangle(0, 0, area.get_allocated_width(), area.get_allocated_height())
@@ -104,7 +163,7 @@ class JanelaRGB(Gtk.Window):
     def __init__(self):
         super().__init__(title="%s — %s" % (NOME_APLICATIVO, MODELO))
         self.set_border_width(12)
-        self.set_default_size(440, 430)
+        self.set_default_size(440, 520)
         self.set_position(Gtk.WindowPosition.CENTER)
 
         self.ultimo_brilho = 255
@@ -120,7 +179,9 @@ class JanelaRGB(Gtk.Window):
 
         self._montar_interface()
         self._carregar_estado()
+        self._sincronizar_touchpad()
         GLib.timeout_add(800, self._sincronizar)
+        GLib.timeout_add(1500, self._sincronizar_touchpad)
 
     # ------------------------------------------------------------------
     # Construção da interface
@@ -232,10 +293,27 @@ class JanelaRGB(Gtk.Window):
         linha_efeito.pack_end(self.combo, False, False, 0)
         caixa.pack_start(linha_efeito, False, False, 0)
 
+        caixa.pack_start(Gtk.Separator(), False, False, 4)
+
+        rotulo_touchpad = Gtk.Label()
+        rotulo_touchpad.set_markup("<b>Touchpad</b>")
+        rotulo_touchpad.set_xalign(0)
+        caixa.pack_start(rotulo_touchpad, False, False, 0)
+
+        self.botao_touchpad = Gtk.Button()
+        self.botao_touchpad.set_hexpand(True)
+        self.botao_touchpad.set_tooltip_text(
+            "Alterna o touchpad. Se desligar usando o próprio touchpad, "
+            "use Fn+F1 ou um mouse externo para religar."
+        )
+        self.botao_touchpad.connect("clicked", self._ao_clicar_touchpad)
+        caixa.pack_start(self.botao_touchpad, False, False, 0)
+
         rodape = Gtk.Label()
         rodape.set_markup(
             "<small>As teclas Fn do teclado numérico também controlam a "
-            "iluminação e esta janela acompanha.</small>"
+            "iluminação e esta janela acompanha. O Fn+F1 alterna o "
+            "touchpad.</small>"
         )
         rodape.set_line_wrap(True)
         rodape.set_xalign(0)
@@ -359,6 +437,37 @@ class JanelaRGB(Gtk.Window):
         self.botao_poder.set_label(
             "Desligar o teclado" if ligado else "Ligar o teclado"
         )
+
+    def _ao_clicar_touchpad(self, _botao):
+        atual = ler_touchpad_ligado()
+        if atual is None:
+            self.aviso.get_content_area().get_children()[0].set_text(
+                "Não foi possível ler o estado do touchpad."
+            )
+            self.aviso.show_all()
+            return
+        if not definir_touchpad(not atual):
+            self.aviso.get_content_area().get_children()[0].set_text(
+                "Não foi possível alterar o touchpad."
+            )
+            self.aviso.show_all()
+            return
+        self.aviso.hide()
+        self._sincronizar_touchpad()
+
+    def _atualizar_botao_touchpad(self, ligado):
+        if ligado is None:
+            self.botao_touchpad.set_label("Touchpad indisponível")
+            self.botao_touchpad.set_sensitive(False)
+            return
+        self.botao_touchpad.set_sensitive(True)
+        self.botao_touchpad.set_label(
+            "Desligar o touchpad" if ligado else "Ligar o touchpad"
+        )
+
+    def _sincronizar_touchpad(self):
+        self._atualizar_botao_touchpad(ler_touchpad_ligado())
+        return True
 
     def _ao_alternar(self, interruptor, _parametro):
         if self.sincronizando:

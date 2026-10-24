@@ -5,7 +5,7 @@ set -eu
 
 cd "$(dirname "$0")"
 
-VERSAO="1.2.0"
+VERSAO="1.3.0"
 
 USUARIO="${SUDO_USER:-$USER}"
 
