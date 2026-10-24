@@ -63,6 +63,7 @@ bash instalar-tudo.sh --gui      # somente a janela (driver já instalado)
 | --- | --- |
 | `tuxedo_keyboard.ko`, `uniwill_wmi.ko` | `/lib/modules/$(uname -r)/updates/src/` |
 | Configuração do módulo | `/etc/modprobe.d/avell-kbd.conf` |
+| Carregamento no boot | `/etc/modules-load.d/avell-rgb.conf` |
 | Aplicativo | `/usr/local/bin/teclado-rgb` |
 | Atalho no menu | `/usr/share/applications/teclado-rgb.desktop` |
 | Helper de permissões | `/usr/local/libexec/avell-kbd-rgb-perms` |
@@ -76,6 +77,14 @@ options tuxedo_keyboard kbd_type_override=6
 ```
 
 `0x06` é o tipo Clevo `1_ZONE_RGB`, que força o driver a usar o protocolo correto mesmo quando a detecção automática falha.
+
+### Secure Boot
+
+Os módulos são compilados localmente e não possuem assinatura digital. Com o **Secure Boot** ativado, o kernel recusa o carregamento. Desative a opção na BIOS (normalmente em `Security` ou `Boot`) antes de reiniciar.
+
+### Carregamento automático
+
+O `instalar.sh` grava `/etc/modules-load.d/avell-rgb.conf` com `tuxedo_keyboard` e `uniwill_wmi`, garantindo que os módulos subam no boot mesmo quando a detecção automática do ACPI não os carrega.
 
 ---
 

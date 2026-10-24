@@ -25,6 +25,7 @@ sudo depmod -a "$KREL"
 
 echo "== Removendo a configuração persistente =="
 sudo rm -f /etc/modprobe.d/avell-kbd.conf
+sudo rm -f /etc/modules-load.d/avell-rgb.conf
 
 sudo udevadm control --reload-rules 2>/dev/null || true
 sudo systemctl daemon-reload

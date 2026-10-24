@@ -31,6 +31,12 @@ CONF=/etc/modprobe.d/avell-kbd.conf
 echo "options tuxedo_keyboard kbd_type_override=6" | sudo tee "$CONF" >/dev/null
 echo "Configuracao persistente gravada em $CONF"
 
+# Garante o carregamento no boot mesmo quando a deteccao automatica do ACPI
+# nao puxa os modulos.
+LOAD=/etc/modules-load.d/avell-rgb.conf
+printf 'tuxedo_keyboard\nuniwill_wmi\n' | sudo tee "$LOAD" >/dev/null
+echo "Carregamento automatico gravado em $LOAD"
+
 echo
 echo "Versões instaladas agora:"
 for m in tuxedo_keyboard uniwill_wmi; do
