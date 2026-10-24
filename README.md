@@ -7,8 +7,8 @@ Fork do **tuxedo-drivers** da TUXEDO Computers com suporte ao teclado RGB do **A
 ## Instalação rápida
 
 ```bash
-git clone https://github.com/alexandrejazara/tuxedo-drivers-avell-560.git
-cd tuxedo-drivers-avell-560
+git clone https://github.com/alexandreJazara/teclaro-rgb-avell-storm-560-tuxedo-drivers.git
+cd teclaro-rgb-avell-storm-560-tuxedo-drivers
 bash instalar-tudo.sh
 ```
 

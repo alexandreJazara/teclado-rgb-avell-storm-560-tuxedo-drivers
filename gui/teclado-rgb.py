@@ -32,7 +32,7 @@ NOME_APLICATIVO = "Controlador do Teclado LED"
 MODELO = "Avell Storm 560"
 VERSAO = "1.1.0"
 DATA_ATUALIZACAO = "24 de outubro de 2026"
-URL_PROJETO = "https://github.com/alexandrejazara/tuxedo-drivers-avell-560"
+URL_PROJETO = "https://github.com/alexandreJazara/teclaro-rgb-avell-storm-560-tuxedo-drivers"
 AUTOR = "Alexandre Jazara"
 
 # Abaixo disto o teclado está apagado na prática. O systemd-backlight pode
