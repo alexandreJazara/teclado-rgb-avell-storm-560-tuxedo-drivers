@@ -21,6 +21,7 @@
 #ifndef UNIWILL_LEDS_H
 #define UNIWILL_LEDS_H
 
+#include <linux/types.h>
 #include <linux/platform_device.h>
 #include <linux/version.h>
 
@@ -38,12 +39,15 @@ int uniwill_leds_remove(struct platform_device *dev);
 uniwill_kb_backlight_type_t uniwill_leds_get_backlight_type_extern(void);
 void uniwill_leds_restore_state_extern(void);
 bool uniwill_leds_notify_brightness_change_extern(void);
+void uniwill_leds_set_color_extern(u32 color);
+void uniwill_leds_cycle_color_extern(void);
+void uniwill_leds_toggle_extern(void);
+void uniwill_leds_step_brightness_extern(int delta);
 
 // TODO The following should go into a seperate .c file, but for this to work more reworking is required in the tuxedo_keyboard structure.
 
 //#include "uniwill_leds.h"
 
-#include <linux/types.h>
 #include <linux/leds.h>
 #include <linux/led-class-multicolor.h>
 #include "uniwill_interfaces.h"
@@ -75,9 +79,23 @@ static int uniwill_write_kbd_bl_brightness(u8 brightness)
 	if (result)
 		return result;
 	data &= 0x0f; // lower bits must be preserved
+	data &= ~UW_EC_REG_KBD_BL_STATUS_BIT_BL_DISABLED; // clear "backlight off" request
 	data |= brightness << 5; // upper 2 to 3 bits encode brightness
 	data |= UW_EC_REG_KBD_BL_STATUS_SUBCMD_RESET; // "apply bit"
 	return uniwill_write_ec_ram(UW_EC_REG_KBD_BL_STATUS, data);
+}
+
+// Returns the brightness currently latched in the EC, or a negative value when
+// the EC could not be read. Firmware keeps this value across reboots, so it is
+// the only reliable starting point for relative changes.
+static int uniwill_read_kbd_bl_brightness(void)
+{
+	u8 data = 0;
+
+	if (uniwill_read_ec_ram(UW_EC_REG_KBD_BL_STATUS, &data))
+		return -EIO;
+
+	return (data >> 5) & 0x07;
 }
 
 static int uniwill_write_kbd_bl_brightness_white_workaround(u8 brightness)
@@ -189,6 +207,104 @@ static void uniwill_leds_set_brightness_mc(struct led_classdev *led_cdev, enum l
 	led_cdev->brightness = brightness;
 }
 
+// Colors cycled through by the "next color" key, in this order
+static const u32 uniwill_kbd_colors[] = {
+	0xff0000, // red
+	0x00ff00, // green
+	0x0000ff, // blue
+	0xffff00, // yellow
+	0xff00ff, // magenta
+	0x00ffff, // cyan
+	0xffffff, // white
+};
+
+static int uniwill_kbd_color_idx = -1;
+
+static struct led_classdev_mc uniwill_mcled_cdev; // forward declaration
+
+// The LED class device does not necessarily survive: once another platform
+// driver claims the keyboard (clevo does that on resume for example) the
+// uniwill LED interface is unregistered. The EC/WMI transport stays available
+// though, so the Fn keys are dispatched against the EC directly in that case.
+static bool uniwill_leds_is_controllable(void)
+{
+	if (uniwill_get_active_interface_id(NULL))
+		return false;
+
+	if (uniwill_kb_backlight_type == UNIWILL_KB_BACKLIGHT_TYPE_NONE)
+		uniwill_kb_backlight_type = UNIWILL_KB_BACKLIGHT_TYPE_1_ZONE_RGB;
+
+	return uniwill_kb_backlight_type == UNIWILL_KB_BACKLIGHT_TYPE_1_ZONE_RGB;
+}
+
+void uniwill_leds_set_color_extern(u32 color)
+{
+	u8 brightness;
+
+	if (!uniwill_leds_is_controllable())
+		return;
+
+	uniwill_mcled_cdev.subled_info[0].intensity = (color >> 16) & 0xff;
+	uniwill_mcled_cdev.subled_info[1].intensity = (color >> 8) & 0xff;
+	uniwill_mcled_cdev.subled_info[2].intensity = color & 0xff;
+
+	// Setting a color while the backlight is off would stay invisible
+	brightness = uniwill_mcled_cdev.led_cdev.brightness;
+	if (!brightness)
+		brightness = UNIWILL_KBD_BRIGHTNESS_MAX_1_ZONE_RGB;
+
+	uniwill_leds_set_brightness_mc(&uniwill_mcled_cdev.led_cdev, brightness);
+}
+EXPORT_SYMBOL(uniwill_leds_set_color_extern);
+
+void uniwill_leds_cycle_color_extern(void)
+{
+	if (!uniwill_leds_is_controllable())
+		return;
+
+	uniwill_kbd_color_idx = (uniwill_kbd_color_idx + 1) % ARRAY_SIZE(uniwill_kbd_colors);
+	uniwill_leds_set_color_extern(uniwill_kbd_colors[uniwill_kbd_color_idx]);
+}
+EXPORT_SYMBOL(uniwill_leds_cycle_color_extern);
+
+void uniwill_leds_step_brightness_extern(int delta)
+{
+	int brightness;
+
+	if (!uniwill_leds_is_controllable())
+		return;
+
+	brightness = uniwill_read_kbd_bl_brightness();
+	if (brightness < 0)
+		brightness = (int)uniwill_mcled_cdev.led_cdev.brightness;
+
+	brightness += delta;
+	if (brightness < 0)
+		brightness = 0;
+	if (brightness > UNIWILL_KBD_BRIGHTNESS_MAX_1_ZONE_RGB)
+		brightness = UNIWILL_KBD_BRIGHTNESS_MAX_1_ZONE_RGB;
+
+	uniwill_leds_set_brightness_mc(&uniwill_mcled_cdev.led_cdev, brightness);
+}
+EXPORT_SYMBOL(uniwill_leds_step_brightness_extern);
+
+void uniwill_leds_toggle_extern(void)
+{
+	int brightness;
+
+	if (!uniwill_leds_is_controllable())
+		return;
+
+	brightness = uniwill_read_kbd_bl_brightness();
+	if (brightness < 0)
+		brightness = (int)uniwill_mcled_cdev.led_cdev.brightness;
+
+	brightness = brightness ? 0 : UNIWILL_KBD_BRIGHTNESS_MAX_1_ZONE_RGB;
+
+	uniwill_leds_set_brightness_mc(&uniwill_mcled_cdev.led_cdev, brightness);
+}
+EXPORT_SYMBOL(uniwill_leds_toggle_extern);
+
 static struct led_classdev uniwill_led_cdev = {
 	.name = "white:" LED_FUNCTION_KBD_BACKLIGHT,
 	.max_brightness = UNIWILL_KBD_BRIGHTNESS_MAX_WHITE,
@@ -287,6 +403,13 @@ int uniwill_leds_init(struct platform_device *dev)
 	int result = 0, i = 0;
 	u8 data = 0;
 
+	// On this chassis the Uniwill WMI/EC transport does not answer at all and
+	// the keyboard is driven by the Clevo protocol instead. Register the Clevo
+	// LED here so the sysfs interface (brightness/multi_intensity) actually
+	// reaches the hardware, even though uniwill won the probe race.
+	if (clevo_kbd_type_override >= 0)
+		return clevo_leds_init(dev);
+
 	for (i = 0; i < 3; ++i) {
 		if (i) {
 			pr_err("Reading barebone ID failed. Retrying ...\n");
@@ -299,8 +422,7 @@ int uniwill_leds_init(struct platform_device *dev)
 		msleep(200);
 	}
 	if (result || !uniwill_barebone_id) {
-		pr_err("Reading barebone ID failed.\n");
-		return result;
+		pr_info("Reading barebone ID failed. Using Avell fallback.\n");
 	}
 	pr_debug("EC Barebone ID: %#04x\n", uniwill_barebone_id);
 
@@ -311,9 +433,12 @@ int uniwill_leds_init(struct platform_device *dev)
 	// Known affected devices:
 	// - IBP Gen7-9
 	// - Polaris Gen4-5
-	uniwill_read_ec_ram(UW_EC_REG_FEATURES_1, &data);
-	data |= UW_EC_REG_FEATURES_1_BIT_FIXED_COLOR_5_ENABLE;
-	uniwill_write_ec_ram(UW_EC_REG_FEATURES_1, data);
+	// Only write back if the read succeeded, otherwise the value would be
+	// based on zeroed data and clobber unrelated feature bits.
+	if (!uniwill_read_ec_ram(UW_EC_REG_FEATURES_1, &data)) {
+		data |= UW_EC_REG_FEATURES_1_BIT_FIXED_COLOR_5_ENABLE;
+		uniwill_write_ec_ram(UW_EC_REG_FEATURES_1, data);
+	}
 
 	if (dmi_check_system(force_no_ec_led_control)) {
 		pr_debug("Skip uniwill_kb_backlight_type checks because of quirk.\n");
@@ -337,8 +462,7 @@ int uniwill_leds_init(struct platform_device *dev)
 	else {
 		result = uniwill_read_ec_ram(UW_EC_REG_FEATURES_1, &data);
 		if (result) {
-			pr_err("Reading features 1 failed.\n");
-			return result;
+			pr_info("Reading features 1 failed. Using Avell fallback.\n");
 		}
 		pr_debug("UW_EC_REG_FEATURES_1: 0x%02x\n", data);
 
@@ -346,6 +470,10 @@ int uniwill_leds_init(struct platform_device *dev)
 			uniwill_kb_backlight_type = UNIWILL_KB_BACKLIGHT_TYPE_1_ZONE_RGB;
 			uniwill_kbl_brightness_ec_controlled = true;
 		}
+	}
+	if (!uniwill_kb_backlight_type) {
+		uniwill_kb_backlight_type = UNIWILL_KB_BACKLIGHT_TYPE_1_ZONE_RGB;
+		uniwill_kbl_brightness_ec_controlled = true;
 	}
 	pr_debug("Keyboard backlight type: 0x%02x\n", uniwill_kb_backlight_type);
 
@@ -390,6 +518,9 @@ EXPORT_SYMBOL(uniwill_leds_init);
 int uniwill_leds_remove(struct platform_device *dev)
 {
 	int result = 0;
+
+	if (clevo_kbd_type_override >= 0)
+		return clevo_leds_remove(dev);
 
 	if (uw_leds_initialized) {
 		uw_leds_initialized = false;

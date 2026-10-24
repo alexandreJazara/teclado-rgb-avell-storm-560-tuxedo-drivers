@@ -1,0 +1,5 @@
+# Concede acesso ao grupo plugdev ao LED do teclado RGB controlado pelo
+# tuxedo_keyboard (protocolo Clevo).
+SUBSYSTEM=="leds", KERNEL=="rgb:kbd_backlight", ACTION=="add|change", RUN+="/usr/local/libexec/avell-kbd-rgb-perms"
+# Atributo de efeitos exposto no platform device
+SUBSYSTEM=="platform", KERNEL=="tuxedo_keyboard", ACTION=="add|change", RUN+="/usr/local/libexec/avell-kbd-rgb-perms"

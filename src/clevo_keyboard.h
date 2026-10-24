@@ -28,6 +28,7 @@
 #include "tuxedo_keyboard_common.h"
 #include "clevo_interfaces.h"
 #include "clevo_leds.h"
+#include "uniwill_leds.h"
 
 // Clevo event codes
 #define CLEVO_EVENT_KB_LEDS_DECREASE		0x81
@@ -175,6 +176,8 @@ int clevo_evaluate_method(u8 cmd, u32 arg, u32 *result)
 		ACPI_FREE(out_obj);
 	}
 
+	TUXEDO_DEBUG("method 0x%02x arg 0x%08x -> status %d\n", cmd, arg, status);
+
 	return status;
 }
 EXPORT_SYMBOL(clevo_evaluate_method);
@@ -284,6 +287,91 @@ static void clevo_send_cc_combo(void)
 	input_sync(clevo_keyboard_driver.input_device);
 }
 
+// Returns the LED class device backing the keyboard backlight, or NULL when only
+// the uniwill LED interface is available (e.g. Avell/Uniwill ECs behind a Clevo
+// style event interface).
+static struct led_classdev *clevo_kbd_backlight_led_cdev(void)
+{
+	switch (clevo_leds_get_backlight_type()) {
+	case CLEVO_KB_BACKLIGHT_TYPE_FIXED_COLOR:
+		return &clevo_led_cdev;
+	case CLEVO_KB_BACKLIGHT_TYPE_1_ZONE_RGB:
+	case CLEVO_KB_BACKLIGHT_TYPE_3_ZONE_RGB:
+		return &clevo_mcled_cdevs[0].led_cdev;
+	default:
+		return NULL;
+	}
+}
+
+// Brightness steps used by the step keys. The firmware accepts the whole
+// 0-255 range, but changing it by a single unit is invisible, so move between
+// a handful of evenly spaced levels instead.
+static const u8 clevo_kbd_brightness_levels[] = {
+	0x00, 0x33, 0x66, 0x99, 0xcc, 0xff,
+};
+
+static void clevo_kbd_backlight_step_brightness(int delta)
+{
+	struct led_classdev *led_cdev = clevo_kbd_backlight_led_cdev();
+	int i, level, distance, best;
+
+	if (led_cdev == NULL) {
+		uniwill_leds_step_brightness_extern(delta);
+		return;
+	}
+
+	clevo_evaluate_set_keyboard_status(1);
+
+	// Start from the level closest to the current brightness so that the
+	// direction of the key always matches what is seen on the keyboard.
+	level = 0;
+	best = led_cdev->brightness;
+	for (i = 1; i < ARRAY_SIZE(clevo_kbd_brightness_levels); i++) {
+		distance = (int)clevo_kbd_brightness_levels[i] - (int)led_cdev->brightness;
+		if (distance < 0)
+			distance = -distance;
+		if (distance < best) {
+			best = distance;
+			level = i;
+		}
+	}
+
+	level += delta;
+	if (level < 0)
+		level = 0;
+	if (level >= ARRAY_SIZE(clevo_kbd_brightness_levels))
+		level = ARRAY_SIZE(clevo_kbd_brightness_levels) - 1;
+
+	led_cdev->brightness_set(led_cdev, clevo_kbd_brightness_levels[level]);
+}
+
+static void clevo_kbd_backlight_toggle(void)
+{
+	struct led_classdev *led_cdev = clevo_kbd_backlight_led_cdev();
+	int brightness;
+
+	if (led_cdev == NULL) {
+		uniwill_leds_toggle_extern();
+		return;
+	}
+
+	clevo_evaluate_set_keyboard_status(1);
+
+	brightness = led_cdev->brightness ? 0 : led_cdev->max_brightness;
+	led_cdev->brightness_set(led_cdev, brightness);
+}
+
+static void clevo_kbd_backlight_next_color(void)
+{
+	if (clevo_leds_get_backlight_type() == CLEVO_KB_BACKLIGHT_TYPE_FIXED_COLOR) {
+		clevo_send_cc_combo();
+	} else if (clevo_kbd_backlight_led_cdev() == NULL) {
+		uniwill_leds_cycle_color_extern();
+	} else {
+		set_next_color_whole_kb();
+	}
+}
+
 static void clevo_keyboard_event_callb(u32 event)
 {
 	int err;
@@ -297,11 +385,19 @@ static void clevo_keyboard_event_callb(u32 event)
 			clevo_send_cc_combo();
 			break;
 		case CLEVO_EVENT_KB_LEDS_CYCLE_MODE:
-			if (clevo_leds_get_backlight_type() == CLEVO_KB_BACKLIGHT_TYPE_FIXED_COLOR) {
-				clevo_send_cc_combo();
-			} else {
-				set_next_color_whole_kb();
-			}
+			clevo_kbd_backlight_next_color();
+			break;
+		case CLEVO_EVENT_KB_LEDS_DECREASE:
+		case CLEVO_EVENT_KB_LEDS_DECREASE2:
+			clevo_kbd_backlight_step_brightness(-1);
+			break;
+		case CLEVO_EVENT_KB_LEDS_INCREASE:
+		case CLEVO_EVENT_KB_LEDS_INCREASE2:
+			clevo_kbd_backlight_step_brightness(1);
+			break;
+		case CLEVO_EVENT_KB_LEDS_TOGGLE:
+		case CLEVO_EVENT_KB_LEDS_TOGGLE2:
+			clevo_kbd_backlight_toggle();
 			break;
 		case CLEVO_EVENT_KB_LEDS_CYCLE_BRIGHTNESS:
 			clevo_leds_notify_brightness_change_extern();

@@ -1,101 +1,53 @@
-# Tuxedo Drivers - Suporte a Teclado RGB para Avell Storm 560
+# Teclado RGB do Avell Storm 560
 
-Modificação (patch) do driver oficial da TUXEDO Computers para viabilizar o controle de retroiluminação RGB e os atalhos físicos do teclado no notebook **Avell Storm 560** (chassi Tongfang/Uniwill) em distribuições Linux (Linux Mint, Ubuntu e derivados).
+Fork do **tuxedo-drivers** da TUXEDO Computers com suporte ao teclado RGB do **Avell Storm 560** (chassi Tongfang/Uniwill) em Linux Mint, Ubuntu e derivados.
 
----
+**Versão 1.0.0** — atualizada em **24 de outubro de 2026**
 
-## ⚠️ AVISO LEGAL E ISENÇÃO DE RESPONSABILIDADE (DISCLAIMER)
+## Instalação rápida
 
-> **LEIA COM ATENÇÃO:**
->
-> 1. **SEM VÍNCULO OU SUPORTE OFICIAL:** Este repositório é uma iniciativa independente e de código aberto. Não possui qualquer vínculo comercial, chancela ou suporte por parte da **Avell High Performance** ou da **TUXEDO Computers GmbH**.
-> 2. **ISENÇÃO TOTAL DE RESPONSABILIDADE:** Este código foi adaptado e testado exclusivamente no hardware de desenvolvimento do autor (**Avell Storm 560**, AMD Ryzen 7, NVIDIA RTX 5060, rodando Linux Mint). O autor **NÃO SE RESPONSABILIZA** por quaisquer danos diretos, indiretos, falhas no sistema operacional, instabilidades, congelamentos, queima de componentes ou perda de garantia decorrentes do uso, instalação ou modificação destes drivers em qualquer equipamento.
-> 3. **USO POR SUA CONTA E RISCO:** Todo e qualquer procedimento aqui descrito deve ser realizado por usuários conscientes dos riscos técnicos de compilar e carregar módulos modificados diretamente no kernel do Linux.
-
----
-
-## 📌 O que foi modificado?
-
-- **Roteamento de GUID WMI:** Redirecionamento das chamadas da controladora WMI para o identificador `UNIWILL_WMI_MGMT_GUID_BA` (`ABBC0F6D-8EA1-11D1-00A0-C90629100000`), utilizado pela BIOS da Avell.
-- **Tratamento de Retorno ACPI:** Suporte a retornos do tipo `ACPI_TYPE_INTEGER` nas avaliações do Embedded Controller (EC).
-- **Liberação de Interface de LEDs:** Bypass de checagens exclusivas de BIOS Tuxedo e ativação de perfil de iluminação RGB de 1 zona (`rgb:kbd_backlight`).
-- **Build seguro:** Correção no Makefile (`CURDIR`) para evitar erros de compilação ao rodar sob privilégios de `sudo`.
-
----
-
-## 🚀 Como Compilar e Instalar
-
-### Pré-requisitos
 ```bash
-sudo apt update
-sudo apt install build-essential git dkms linux-headers-$(uname -r)
+git clone https://github.com/alexandrejazara/tuxedo-drivers-avell-560.git
+cd tuxedo-drivers-avell-560
+bash instalar-tudo.sh
 ```
 
-Instalação
-Bash
-# Compilar os módulos
-make clean && make
+Reinicie depois. O script compila os módulos, instala o driver, grava a configuração persistente (`kbd_type_override=6`) e instala a janela **Teclado RGB** com as permissões de acesso.
 
-# Instalar no sistema
-sudo make install
-sudo depmod -a
-
-# Carregar os drivers no kernel
-sudo modprobe tuxedo_keyboard
-sudo modprobe uniwill_wmi
-⌨️ Atalhos de Hardware Ativos (Avell Storm 560)
-Com o driver carregado, o teclado passa a responder pelos seguintes atalhos físicos no teclado numérico:
-
-Fn + /: Alternar entre as cores RGB (Vermelho, Verde, Azul, Amarelo, Magenta, Ciano, Branco).
-
-Fn + *: Ligar / Desligar a iluminação.
-
-Fn + + / Fn + -: Aumentar / Diminuir o brilho do teclado.
-
-Controle manual via sysfs:
-
-Bash
-# Brilho máximo:
-echo 255 | sudo tee /sys/class/leds/rgb:kbd_backlight/brightness
-
-# Definir cor branca (R G B):
-echo "255 255 255" | sudo tee /sys/class/leds/rgb:kbd_backlight/multi_intensity
-
----
-
-## ⚙️ Observações Importantes e Pós-Instalação
-
-### 1. Secure Boot Desativado na BIOS
-Como estes módulos do kernel são compilados manualmente (*out-of-tree*) e não possuem assinaturas digitais da Canonical/Microsoft, o **Secure Boot deve estar desativado** na BIOS do equipamento[cite: 1]. Se o Secure Boot permanecer ativado, o Linux bloqueará o carregamento dos drivers por política de segurança[cite: 1].
-* **Como desativar:** Reinicie o computador, pressione `F2` repetidamente para acessar a BIOS, localize a opção **Secure Boot** (na aba *Security* ou *Boot*), mude para **Disabled** e pressione `F10` para salvar e sair[cite: 1].
-
-### 2. Carregamento Automático na Inicialização
-Por padrão, após a instalação, os módulos podem não carregar sozinhos no boot do sistema operacional. Para garantir que o teclado e os atalhos sejam inicializados automaticamente ao ligar o notebook (sem precisar rodar `modprobe` no terminal), configure a inicialização automática com o comando:
+Para remover tudo depois:
 
 ```bash
-echo -e "tuxedo_keyboard\nuniwill_wmi" | sudo tee /etc/modules-load.d/avell-rgb.conf
-``` 
----
+bash desinstalar.sh
+```
 
-3. Atualizações Futuras do Kernel Linux
-Módulos de kernel ficam atrelados à versão exata do kernel em que foram construídos. Caso o gerenciador de atualizações da sua distribuição instale uma nova versão do Kernel Linux:
+## O que funciona
 
-Abra a pasta do repositório no terminal:
+| Recurso | Situação |
+| --- | --- |
+| Ligar / desligar (`Fn` + `*`) | Funciona |
+| Brilho (`Fn` + `+` / `Fn` + `-`) | Funciona, em 6 degraus visíveis |
+| Troca de cor (`Fn` + `/`) | Funciona, percorre 8 cores |
+| Janela gráfica "Teclado RGB" | Funciona |
+| Cor RGB arbitrária | Funciona |
+| Efeitos animados | Em software, com a janela aberta |
+| Efeitos nativos do firmware | Aceitos, mas ignorados neste chassi |
+| Zonas independentes | Não: o teclado tem uma única zona |
 
-Bash
-cd ~/tuxedo-drivers
-Recompile e reinstale para a nova versão:
+## Documentação completa
 
-Bash
-make clean && make
-sudo make install
-sudo depmod -a
-Reinicie o notebook para carregar os módulos sob o novo kernel.
+Instruções detalhadas de instalação, uso, arquitetura, diagnóstico, limitações e desinstalação estão em:
+
+**[README-jaazara-modification-to-avell-560.md](README-jaazara-modification-to-avell-560.md)**
+
+## Aviso legal
+
+Este é um projeto independente, sem vínculo com a **Avell High Performance** ou a **TUXEDO Computers GmbH**. O código foi testado apenas no hardware do autor. Compilar e carregar módulos modificados no kernel é feito por sua conta e risco. Veja o aviso completo e a licença no [README em português](README-jaazara-modification-to-avell-560.md).
+
+O driver base é da TUXEDO Computers; a adaptação para o Avell Storm 560 e a janela gráfica foram desenvolvidas por **Alexandre Jazara** com auxílio do **Qoder (IA)**, sob a licença GPL-2.0-or-later.
 
 ---
 
 # README ORIGIN
-
 
 # Table of Content
 - <a href="#description">Description</a>

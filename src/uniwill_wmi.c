@@ -79,16 +79,23 @@ static int uw_wmi_ec_evaluate(u8 function, u32 arg, u32 *return_buffer)
 
 	wmi_arg_bytes[5] = function;
 
-	status = wmi_evaluate_method(UNIWILL_WMI_MGMT_GUID_BC, wmi_instance, wmi_method_id, &wmi_in, &wmi_out);
+	status = wmi_evaluate_method(UNIWILL_WMI_MGMT_GUID_BA, wmi_instance, wmi_method_id, &wmi_in, &wmi_out);
 	out_acpi = (union acpi_object *) wmi_out.pointer;
 
 	if (out_acpi && out_acpi->type == ACPI_TYPE_BUFFER) {
+		pr_debug("eval: fn %u arg 0x%04x -> buffer len %u\n",
+			 function, arg, out_acpi->buffer.length);
 		memcpy(return_buffer, out_acpi->buffer.pointer, out_acpi->buffer.length);
-	} /* else if (out_acpi && out_acpi->type == ACPI_TYPE_INTEGER) {
-		e_result = (u32) out_acpi->integer.value;
-	}*/
+	} else if (out_acpi && out_acpi->type == ACPI_TYPE_INTEGER) {
+		pr_debug("eval: fn %u arg 0x%04x -> integer 0x%08x\n",
+			 function, arg, (u32) out_acpi->integer.value);
+		return_buffer[0] = (u32) out_acpi->integer.value;
+	} else {
+		pr_debug("eval: fn %u arg 0x%04x -> unexpected type %u\n",
+			 function, arg, out_acpi ? out_acpi->type : 0xff);
+	}
 	if (ACPI_FAILURE(status)) {
-		pr_err("uniwill_wmi.h: Error evaluating method\n");
+		pr_err("uniwill_wmi.h: Error evaluating method (0x%x)\n", status);
 		e_result = -EIO;
 	}
 
@@ -328,13 +335,7 @@ static int uniwill_wmi_probe(struct wmi_device *wdev, const void *dummy_context)
 	int status;
 
 	// Look for for GUIDs used on uniwill devices
-	status =
-		wmi_has_guid(UNIWILL_WMI_EVENT_GUID_0) &&
-		wmi_has_guid(UNIWILL_WMI_EVENT_GUID_1) &&
-		wmi_has_guid(UNIWILL_WMI_EVENT_GUID_2) &&
-		wmi_has_guid(UNIWILL_WMI_MGMT_GUID_BA) &&
-		wmi_has_guid(UNIWILL_WMI_MGMT_GUID_BB) &&
-		wmi_has_guid(UNIWILL_WMI_MGMT_GUID_BC);
+	status = wmi_has_guid(UNIWILL_WMI_MGMT_GUID_BA);
 	
 	if (!status) {
 		pr_debug("probe: At least one Uniwill GUID missing\n");
@@ -385,7 +386,7 @@ static void uniwill_wmi_notify(struct wmi_device *wdev, union acpi_object *obj)
 static const struct wmi_device_id uniwill_wmi_device_ids[] = {
 	// Listing one should be enough, for a driver that "takes care of all anyways"
 	// also prevents probe (and handling) per "device"
-	{ .guid_string = UNIWILL_WMI_EVENT_GUID_2 },
+	{ .guid_string = UNIWILL_WMI_MGMT_GUID_BA },
 	{ }
 };
 

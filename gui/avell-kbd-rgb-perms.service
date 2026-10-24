@@ -1,0 +1,11 @@
+[Unit]
+Description=Permissoes do LED RGB do teclado Avell
+After=systemd-udevd.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'for i in $(seq 1 30); do [ -d /sys/class/leds/rgb:kbd_backlight ] && break; sleep 1; done; exec /usr/local/libexec/avell-kbd-rgb-perms'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

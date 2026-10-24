@@ -1,0 +1,20 @@
+#!/bin/sh
+# Concede ao grupo plugdev acesso de escrita ao LED do teclado e ao seletor de
+# efeitos, para que a janela de controle rode sem privilégios de root.
+# Executado pela regra udev, pelo serviço systemd e pelo instalar-gui.sh.
+
+LED=/sys/class/leds/rgb:kbd_backlight
+PLATAFORMA=/sys/devices/platform/tuxedo_keyboard
+
+if [ -d "$LED" ]; then
+	for atributo in brightness multi_intensity; do
+		[ -e "$LED/$atributo" ] || continue
+		chgrp plugdev "$LED/$atributo" 2>/dev/null || true
+		chmod 0664 "$LED/$atributo" 2>/dev/null || true
+	done
+fi
+
+if [ -e "$PLATAFORMA/kbd_effect" ]; then
+	chgrp plugdev "$PLATAFORMA/kbd_effect" 2>/dev/null || true
+	chmod 0664 "$PLATAFORMA/kbd_effect" 2>/dev/null || true
+fi

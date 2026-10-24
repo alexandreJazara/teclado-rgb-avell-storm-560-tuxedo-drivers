@@ -33,6 +33,13 @@ MODULE_AUTHOR("TUXEDO Computers GmbH <tux@tuxedocomputers.com>");
 MODULE_DESCRIPTION("TUXEDO Computers keyboard & keyboard backlight Driver");
 MODULE_LICENSE("GPL");
 
+// Some firmwares do not answer CLEVO_CMD_GET_SPECS (or answer too late) but do
+// implement the RGB backlight commands. This override makes it possible to use
+// them anyway. -1 keeps the auto-detected value.
+int clevo_kbd_type_override = -1;
+module_param_named(kbd_type_override, clevo_kbd_type_override, int, 0644);
+MODULE_PARM_DESC(kbd_type_override, "Force Clevo keyboard backlight type (-1 = auto detect)");
+
 static DEFINE_MUTEX(tuxedo_keyboard_init_driver_lock);
 
 // sysfs device function
@@ -165,6 +172,10 @@ static void __exit tuxedo_input_exit(void)
 
 void tuxedo_keyboard_remove_driver(struct tuxedo_keyboard_driver *tk_driver)
 {
+	// Nothing initialized (anymore), nothing to remove
+	if (current_driver == NULL || tuxedo_platform_device == NULL)
+		return;
+
 	bool specified_driver_differ_from_used =
 		tk_driver != NULL && 
 		(
@@ -199,7 +210,7 @@ static int __init tuxedo_keyboard_init(void)
 {
 	TUXEDO_INFO("module init\n");
 
-	if (!tuxedo_is_compatible())
+	if (0)
 		return -ENODEV;
 
 	return 0;

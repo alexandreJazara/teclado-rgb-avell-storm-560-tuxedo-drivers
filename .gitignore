@@ -19,3 +19,15 @@ Module.symvers
 /*.kdev4
 /.vscode
 /.cache
+
+# GUI artifacts
+__pycache__/
+*.pyc
+
+# local diagnostics and backups
+*.bak
+diag-*.log
+teste-*.log
+
+# agent scratch space
+.qoder/
