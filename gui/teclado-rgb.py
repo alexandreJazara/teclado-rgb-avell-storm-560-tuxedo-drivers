@@ -30,7 +30,7 @@ HELPER_PERMISSOES = "/usr/local/libexec/avell-kbd-rgb-perms"
 # Informações exibidas na aba "Sobre". Mantenha em sincronia com o README.
 NOME_APLICATIVO = "Controlador do Teclado LED"
 MODELO = "Avell Storm 560"
-VERSAO = "1.0.0"
+VERSAO = "1.1.0"
 DATA_ATUALIZACAO = "24 de outubro de 2026"
 URL_PROJETO = "https://github.com/alexandrejazara/tuxedo-drivers-avell-560"
 AUTOR = "Alexandre Jazara"

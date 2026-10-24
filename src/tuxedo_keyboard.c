@@ -86,6 +86,14 @@ static int tuxedo_input_init(const struct key_entry key_map[])
 		}
 	}
 
+	// The Clevo event handler reports touchpad keys directly, because the active
+	// keymap can belong to the Uniwill driver. Advertise the capabilities here
+	// so the desktop environment receives KEY_TOUCHPAD_TOGGLE/ON/OFF as regular
+	// XF86TouchpadToggle/On/Off keys.
+	input_set_capability(tuxedo_input_device, EV_KEY, KEY_TOUCHPAD_TOGGLE);
+	input_set_capability(tuxedo_input_device, EV_KEY, KEY_TOUCHPAD_ON);
+	input_set_capability(tuxedo_input_device, EV_KEY, KEY_TOUCHPAD_OFF);
+
 	err = input_register_device(tuxedo_input_device);
 	if (unlikely(err)) {
 		TUXEDO_ERROR("Error registering input device\n");

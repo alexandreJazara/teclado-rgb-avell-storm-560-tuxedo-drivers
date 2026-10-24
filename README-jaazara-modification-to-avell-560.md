@@ -4,7 +4,7 @@ Driver de kernel e aplicativo gráfico para controlar a iluminação RGB do tecl
 
 Este repositório é um fork do [tuxedo-drivers](https://gitlab.com/tuxedocomputers/development/packages/tuxedo-drivers) da TUXEDO Computers, adaptado para um chassi que responde ao protocolo **Clevo** em vez do WMI da Uniwill.
 
-**Versão 1.0.0** — atualizada em **24 de outubro de 2026**
+**Versão 1.1.0** — atualizada em **24 de outubro de 2026**
 
 ---
 
@@ -15,6 +15,7 @@ Este repositório é um fork do [tuxedo-drivers](https://gitlab.com/tuxedocomput
 | Ligar / desligar (`Fn` + `*`) | Funciona |
 | Aumentar / diminuir brilho (`Fn` + `+` / `Fn` + `-`) | Funciona, em 6 degraus visíveis |
 | Trocar a cor (`Fn` + `/`) | Funciona, percorre 8 cores |
+| Bloquear/desbloquear o touchpad (`Fn` + `F1`) | Funciona |
 | Controlador do Teclado LED | Funciona |
 | Cor RGB arbitrária (seletor de cores) | Funciona |
 | Efeitos animados (respiração, arco-íris, flash, onda) | Funcionam em software, com a janela aberta |
@@ -111,6 +112,7 @@ As teclas `Fn` continuam funcionando e a janela acompanha as mudanças em até u
 | `Fn` + `+` | Aumenta o brilho |
 | `Fn` + `-` | Diminui o brilho |
 | `Fn` + `/` | Próxima cor |
+| `Fn` + `F1` | Liga / desliga o touchpad |
 
 ### Efeitos
 
@@ -156,6 +158,7 @@ O caminho até o teclado funcionar envolveu diagnósticos no firmware deste chas
 5. **As funções externas ignoravam o override.** Quatro funções de `clevo_leds.h` testavam a variável crua em vez de `clevo_leds_get_backlight_type()`, o que impedia a troca de cor. Passaram a usar o getter.
 6. **O brilho mudava de um em um.** Na escala de 0 a 255 o passo era invisível. O controle por tecla agora percorre seis níveis (`0x00`, `0x33`, `0x66`, `0x99`, `0xcc`, `0xff`).
 7. **Os efeitos do firmware não funcionam.** Tentativas com `wave`, `breathe` e outros modos geraram `method 0x67 -> status 0` sem nenhuma mudança visual. A solução foi animar pela janela.
+8. **O `Fn+F1` não chegava ao desktop.** O firmware envia `0x5D`, mas o evento caía no keymap do Uniwill e era descartado; além disso, o `KEY_F21` não tem mapeamento no X11. O driver passou a reportar `KEY_TOUCHPAD_TOGGLE`/`ON`/`OFF` diretamente, que o Cinnamon traduz para `XF86TouchpadToggle`.
 
 ---
 

@@ -372,6 +372,18 @@ static void clevo_kbd_backlight_next_color(void)
 	}
 }
 
+static void clevo_report_touchpad_key(u32 key)
+{
+	struct input_dev *input = current_driver != NULL ? current_driver->input_device : NULL;
+
+	if (input == NULL)
+		return;
+
+	input_report_key(input, key, 1);
+	input_report_key(input, key, 0);
+	input_sync(input);
+}
+
 static void clevo_keyboard_event_callb(u32 event)
 {
 	int err;
@@ -414,6 +426,19 @@ static void clevo_keyboard_event_callb(u32 event)
 					clevo_acpi_fn_lock_set(1);
 			}
 			break;
+		// Touchpad keys are reported directly instead of through the sparse
+		// keymap: the active keymap can be the Uniwill one, which does not
+		// know these Clevo event codes. KEY_TOUCHPAD_TOGGLE/ON/OFF reach the
+		// desktop as XF86TouchpadToggle/On/Off, which Cinnamon handles natively.
+		case CLEVO_EVENT_TOUCHPAD_TOGGLE:
+			clevo_report_touchpad_key(KEY_TOUCHPAD_TOGGLE);
+			return;
+		case CLEVO_EVENT_TOUCHPAD_OFF:
+			clevo_report_touchpad_key(KEY_TOUCHPAD_OFF);
+			return;
+		case CLEVO_EVENT_TOUCHPAD_ON:
+			clevo_report_touchpad_key(KEY_TOUCHPAD_ON);
+			return;
 		default:
 			break;
 	}
