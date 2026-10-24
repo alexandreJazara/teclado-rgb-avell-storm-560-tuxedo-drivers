@@ -4,7 +4,7 @@ Driver de kernel e aplicativo gráfico para controlar a iluminação RGB do tecl
 
 Este repositório é um fork do [tuxedo-drivers](https://gitlab.com/tuxedocomputers/development/packages/tuxedo-drivers) da TUXEDO Computers, adaptado para um chassi que responde ao protocolo **Clevo** em vez do WMI da Uniwill.
 
-**Versão 1.1.0** — atualizada em **24 de outubro de 2026**
+**Versão 1.2.0** — atualizada em **24 de outubro de 2026**
 
 ---
 
@@ -13,6 +13,7 @@ Este repositório é um fork do [tuxedo-drivers](https://gitlab.com/tuxedocomput
 | Recurso | Situação |
 | --- | --- |
 | Ligar / desligar (`Fn` + `*`) | Funciona |
+| Botão **Ligar/Desligar o teclado** na janela | Funciona |
 | Aumentar / diminuir brilho (`Fn` + `+` / `Fn` + `-`) | Funciona, em 6 degraus visíveis |
 | Trocar a cor (`Fn` + `/`) | Funciona, percorre 8 cores |
 | Bloquear/desbloquear o touchpad (`Fn` + `F1`) | Funciona |

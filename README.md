@@ -2,7 +2,7 @@
 
 Fork do **tuxedo-drivers** da TUXEDO Computers com suporte ao teclado RGB do **Avell Storm 560** (chassi Tongfang/Uniwill) em Linux Mint, Ubuntu e derivados.
 
-**Versão 1.1.0** — atualizada em **24 de outubro de 2026**
+**Versão 1.2.0** — atualizada em **24 de outubro de 2026**
 
 ## Instalação rápida
 
@@ -25,6 +25,7 @@ bash desinstalar.sh
 | Recurso | Situação |
 | --- | --- |
 | Ligar / desligar (`Fn` + `*`) | Funciona |
+| Botão **Ligar/Desligar o teclado** na janela | Funciona |
 | Brilho (`Fn` + `+` / `Fn` + `-`) | Funciona, em 6 degraus visíveis |
 | Troca de cor (`Fn` + `/`) | Funciona, percorre 8 cores |
 | Bloquear/desbloquear o touchpad (`Fn` + `F1`) | Funciona |

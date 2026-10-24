@@ -30,7 +30,7 @@ HELPER_PERMISSOES = "/usr/local/libexec/avell-kbd-rgb-perms"
 # Informações exibidas na aba "Sobre". Mantenha em sincronia com o README.
 NOME_APLICATIVO = "Controlador do Teclado LED"
 MODELO = "Avell Storm 560"
-VERSAO = "1.1.0"
+VERSAO = "1.2.0"
 DATA_ATUALIZACAO = "24 de outubro de 2026"
 URL_PROJETO = "https://github.com/alexandreJazara/teclado-rgb-avell-storm-560-tuxedo-drivers"
 AUTOR = "Alexandre Jazara"
@@ -163,6 +163,13 @@ class JanelaRGB(Gtk.Window):
         linha_poder.pack_start(rotulo_poder, True, True, 0)
         linha_poder.pack_end(self.interruptor, False, False, 0)
         caixa.pack_start(linha_poder, False, False, 0)
+
+        # Botão de ação explícito, além do interruptor: deixa claro que a
+        # iluminação do teclado pode ser apagada e restaurada num clique.
+        self.botao_poder = Gtk.Button()
+        self.botao_poder.set_hexpand(True)
+        self.botao_poder.connect("clicked", self._ao_clicar_poder)
+        caixa.pack_start(self.botao_poder, False, False, 0)
 
         # Brilho
         linha_brilho = Gtk.Box(spacing=10)
@@ -345,6 +352,14 @@ class JanelaRGB(Gtk.Window):
     # ------------------------------------------------------------------
     # Callbacks
     # ------------------------------------------------------------------
+    def _ao_clicar_poder(self, _botao):
+        self.interruptor.set_active(not self.interruptor.get_active())
+
+    def _atualizar_botao_poder(self, ligado):
+        self.botao_poder.set_label(
+            "Desligar o teclado" if ligado else "Ligar o teclado"
+        )
+
     def _ao_alternar(self, interruptor, _parametro):
         if self.sincronizando:
             return
@@ -361,6 +376,8 @@ class JanelaRGB(Gtk.Window):
             if atual > LIMIAR_VISIVEL:
                 self.ultimo_brilho = atual
             self._aplicar_brilho(0)
+
+        self._atualizar_botao_poder(interruptor.get_active())
 
     def _ao_mudar_brilho(self, escala):
         if self.sincronizando:
@@ -540,6 +557,7 @@ class JanelaRGB(Gtk.Window):
                 self.ultimo_brilho = brilho
             ligado = brilho > LIMIAR_VISIVEL or efeito not in (None, "custom")
             self.interruptor.set_active(ligado)
+            self._atualizar_botao_poder(ligado)
             self.botao_cor.set_rgba(
                 Gdk.RGBA(cor[0] / 255, cor[1] / 255, cor[2] / 255, 1.0)
             )

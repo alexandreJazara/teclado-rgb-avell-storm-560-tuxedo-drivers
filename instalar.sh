@@ -10,7 +10,7 @@ set -eu
 
 cd "$(dirname "$0")"
 
-VERSAO="1.1.0"
+VERSAO="1.2.0"
 
 KREL="$(uname -r)"
 DEST="/lib/modules/$KREL/updates/src"
