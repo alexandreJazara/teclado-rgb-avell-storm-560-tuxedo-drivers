@@ -2,9 +2,19 @@
 
 Fork do **tuxedo-drivers** da TUXEDO Computers com suporte ao teclado RGB do **Avell Storm 560** (chassi Tongfang/Uniwill) em Linux Mint, Ubuntu e derivados.
 
-**Versão 1.3.0** — atualizada em **24 de outubro de 2026**
+**Versão 1.4.0** — com suporte a **DKMS** (recompilação automática em atualizações de kernel) e pacote `.deb`
 
 ## Instalação rápida
+
+### Opção 1 — Pacote `.deb` (Linux Mint / Ubuntu / Debian)
+
+Baixe o arquivo `avell-storm560-rgb_1.4.0_all.deb` na aba **Releases** do GitHub e instale com:
+
+```bash
+sudo apt install ./avell-storm560-rgb_1.4.0_all.deb
+```
+
+### Opção 2 — Pelo código-fonte
 
 ```bash
 git clone https://github.com/alexandreJazara/teclado-rgb-avell-storm-560-tuxedo-drivers.git
@@ -12,12 +22,20 @@ cd teclado-rgb-avell-storm-560-tuxedo-drivers
 bash instalar-tudo.sh
 ```
 
-Reinicie depois. O script compila os módulos, instala o driver, grava a configuração persistente (`kbd_type_override=6`) e instala o **Controlador do Teclado LED** com as permissões de acesso.
+Reinicie depois. O instalador registra os módulos no **DKMS** (para não quebrar em atualizações futuras do kernel), grava a configuração persistente (`kbd_type_override=6`) e instala o **Controlador do Teclado LED** com as permissões de acesso.
+
+Para gerar o pacote `.deb` localmente:
+
+```bash
+bash empacotar-deb.sh
+```
 
 Para remover tudo depois:
 
 ```bash
-bash desinstalar.sh
+sudo apt remove avell-storm560-rgb   # se instalou via .deb
+# ou
+bash desinstalar.sh                  # se instalou via script
 ```
 
 ## O que funciona

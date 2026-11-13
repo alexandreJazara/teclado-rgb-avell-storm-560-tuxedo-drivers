@@ -4,7 +4,7 @@ Driver de kernel e aplicativo gráfico para controlar a iluminação RGB do tecl
 
 Este repositório é um fork do [tuxedo-drivers](https://gitlab.com/tuxedocomputers/development/packages/tuxedo-drivers) da TUXEDO Computers, adaptado para um chassi que responde ao protocolo **Clevo** em vez do WMI da Uniwill.
 
-**Versão 1.3.0** — atualizada em **24 de outubro de 2026**
+**Versão 1.4.0** — atualizada com **DKMS** (recompilação automática em atualizações de kernel) e pacote `.deb`
 
 ---
 
@@ -37,7 +37,7 @@ Este repositório é um fork do [tuxedo-drivers](https://gitlab.com/tuxedocomput
 
 ```bash
 sudo apt update
-sudo apt install build-essential git linux-headers-$(uname -r) \
+sudo apt install dkms build-essential git linux-headers-$(uname -r) \
                  python3-gi gir1.2-gtk-3.0
 ```
 
@@ -45,13 +45,29 @@ sudo apt install build-essential git linux-headers-$(uname -r) \
 
 ## Instalação rápida
 
+### Opção 1 — Pacote `.deb` (Linux Mint / Ubuntu / Debian)
+
+Baixe o arquivo `avell-storm560-rgb_1.4.0_all.deb` na aba **Releases** do GitHub e instale com:
+
+```bash
+sudo apt install ./avell-storm560-rgb_1.4.0_all.deb
+```
+
+Para gerar o pacote `.deb` a partir do repositório:
+
+```bash
+bash empacotar-deb.sh
+```
+
+### Opção 2 — Pelo código-fonte
+
 ```bash
 git clone https://github.com/alexandreJazara/teclado-rgb-avell-storm-560-tuxedo-drivers.git
 cd teclado-rgb-avell-storm-560-tuxedo-drivers
 bash instalar-tudo.sh
 ```
 
-O script verifica o ambiente, compila os módulos, instala o driver, grava a configuração persistente e instala a janela com as permissões de acesso. Ao final, **reinicie** para carregar a versão nova do módulo.
+O script verifica o ambiente, registra e compila os módulos via **DKMS** (para que atualizações futuras do kernel recompilem o driver automaticamente), grava a configuração persistente e instala a janela com as permissões de acesso. Ao final, **reinicie** para carregar a versão nova do módulo.
 
 Opções:
 
@@ -64,7 +80,8 @@ bash instalar-tudo.sh --gui      # somente a janela (driver já instalado)
 
 | Arquivo | Destino |
 | --- | --- |
-| `tuxedo_keyboard.ko`, `uniwill_wmi.ko` | `/lib/modules/$(uname -r)/updates/src/` |
+| Fonte DKMS | `/usr/src/avell-storm560-rgb-1.4.0/` |
+| `tuxedo_keyboard.ko`, `uniwill_wmi.ko` | `/lib/modules/<kernel>/updates/src/` (gerenciado pelo DKMS) |
 | Configuração do módulo | `/etc/modprobe.d/avell-kbd.conf` |
 | Carregamento no boot | `/etc/modules-load.d/avell-rgb.conf` |
 | Aplicativo | `/usr/local/bin/teclado-rgb` |
@@ -180,7 +197,7 @@ bash instalar.sh
 bash instalar-gui.sh
 ```
 
-O `Makefile` compila com `make -C /lib/modules/$(uname -r)/build M=$(CURDIR) modules`. O `instalar.sh` copia os `.ko` para `updates/src/`, que tem prioridade sobre `extra/` na busca do `modprobe`.
+O `Makefile` usa `KDIR ?= /lib/modules/$(shell uname -r)/build` para compilar os módulos. O `instalar.sh` copia o código-fonte para `/usr/src/avell-storm560-rgb-1.4.0/` e registra no **DKMS**, que compila e instala os `.ko` em `updates/src/` (com prioridade sobre `extra/` na busca do `modprobe`) automaticamente a cada atualização de kernel.
 
 Para acompanhar o que o driver faz:
 
@@ -210,10 +227,12 @@ gui/
   avell-kbd-rgb-perms      helper que ajusta as permissões do sysfs
   avell-kbd-rgb-perms.service  oneshot que chama o helper no boot
   99-avell-kbd-rgb.rules   regra udev
-instalar.sh                instala os módulos e a configuração
+dkms.conf                  configuração DKMS para recompilação automática
+empacotar-deb.sh           gera o instalador .deb em dist/
+instalar.sh                instala os módulos via DKMS e a configuração
 instalar-gui.sh            instala a janela e as permissões
 instalar-tudo.sh           instalação completa
-desinstalar.sh             remove tudo o que foi instalado
+desinstalar.sh             remove tudo o que foi instalado (inclusive DKMS)
 diag-avell.sh              coleta diagnóstico de ACPI, WMI e do LED
 teste-ec.sh                compara o acesso por WMI e por portas do EC
 teste-onoff.sh             testa apenas ligar/desligar pelo sysfs
@@ -252,7 +271,19 @@ A animação depende da janela aberta. Se ela parar sozinha, provavelmente uma e
 
 **O teclado parou depois de atualizar o kernel**
 
-Os módulos foram compilados para o kernel antigo. Rode `bash instalar-tudo.sh --driver` e reinicie.
+Com o **DKMS** ativo, a recompilação acontece automaticamente na atualização do kernel (desde que o pacote `linux-headers` do novo kernel esteja instalado). Confira com:
+
+```bash
+dkms status
+```
+
+Se necessário forçar a recompilação para o kernel em uso:
+
+```bash
+sudo dkms autoinstall -k $(uname -r)
+# ou
+bash instalar-tudo.sh --driver
+```
 
 ---
 

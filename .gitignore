@@ -13,6 +13,7 @@ Module.symvers
 /build-alpm/
 /build-deb/
 /build-rpm/
+/dist/
 
 # IDE artifacts
 *.kate-swp

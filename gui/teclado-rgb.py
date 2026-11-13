@@ -34,8 +34,8 @@ CHAVE_TOUCHPAD = "send-events"
 # Informações exibidas na aba "Sobre". Mantenha em sincronia com o README.
 NOME_APLICATIVO = "Controlador do Teclado LED"
 MODELO = "Avell Storm 560"
-VERSAO = "1.3.0"
-DATA_ATUALIZACAO = "24 de outubro de 2026"
+VERSAO = "1.4.0"
+DATA_ATUALIZACAO = "13 de novembro de 2026"
 URL_PROJETO = "https://github.com/alexandreJazara/teclado-rgb-avell-storm-560-tuxedo-drivers"
 AUTOR = "Alexandre Jazara"
 
@@ -681,6 +681,19 @@ class JanelaRGB(Gtk.Window):
 def main():
     if not os.path.isdir(LED):
         print("LED rgb:kbd_backlight não encontrado em %s" % LED, file=sys.stderr)
+        dialogo = Gtk.MessageDialog(
+            flags=0,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.OK,
+            text="Driver do teclado RGB não carregado",
+        )
+        dialogo.format_secondary_text(
+            "O dispositivo %s ainda não está disponível.\n\n"
+            "Se você acabou de instalar ou atualizar o driver, reinicie o computador "
+            "para carregar os módulos do kernel." % LED
+        )
+        dialogo.run()
+        dialogo.destroy()
         return 1
 
     janela = JanelaRGB()

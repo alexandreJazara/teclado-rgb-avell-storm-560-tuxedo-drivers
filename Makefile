@@ -20,7 +20,7 @@
 
 .PHONY: all install clean package package-deb package-rpm package-alpm
 
-KDIR := /lib/modules/$(shell uname -r)/build
+KDIR ?= /lib/modules/$(shell uname -r)/build
 
 all:
 	make -C $(KDIR) M=$(CURDIR) $(MAKEFLAGS) modules

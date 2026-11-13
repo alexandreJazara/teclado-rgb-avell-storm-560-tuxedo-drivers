@@ -19,7 +19,13 @@ sudo rm -f /usr/local/libexec/avell-kbd-rgb-perms
 sudo rm -f /usr/share/applications/teclado-rgb.desktop
 sudo rm -f /usr/local/bin/teclado-rgb
 
-echo "== Removendo os módulos instalados em $DEST =="
+echo "== Removendo os módulos (DKMS e manuais) =="
+if command -v dkms >/dev/null 2>&1; then
+	for ver in $(dkms status avell-storm560-rgb 2>/dev/null | awk -F'[,/]' '{gsub(/ /,"",$2); print $2}' | sort -u); do
+		sudo dkms remove -m avell-storm560-rgb -v "$ver" --all || true
+	done
+fi
+sudo rm -rf /usr/src/avell-storm560-rgb-*
 sudo rm -f "$DEST/tuxedo_keyboard.ko" "$DEST/uniwill_wmi.ko"
 sudo depmod -a "$KREL"
 

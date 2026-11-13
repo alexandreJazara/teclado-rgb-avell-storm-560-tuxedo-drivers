@@ -15,7 +15,7 @@ set -eu
 
 cd "$(dirname "$0")"
 
-VERSAO="1.3.0"
+VERSAO="1.4.0"
 
 MODO="${1:-tudo}"
 
@@ -54,6 +54,7 @@ titulo "Verificando o ambiente"
 verificar "/lib/modules/$KREL/build/Makefile" "headers do kernel $KREL"
 command -v make >/dev/null 2>&1 && echo "  [ok] make" || { echo "  [faltando] make"; FALHAS=1; }
 command -v gcc >/dev/null 2>&1 && echo "  [ok] gcc" || { echo "  [faltando] gcc"; FALHAS=1; }
+command -v dkms >/dev/null 2>&1 && echo "  [ok] dkms" || { echo "  [faltando] dkms"; FALHAS=1; }
 
 if [ "$MODO" != "--driver" ]; then
 	if python3 -c "import gi; gi.require_version('Gtk', '3.0')" 2>/dev/null; then
@@ -67,15 +68,12 @@ fi
 if [ "$FALHAS" -ne 0 ]; then
 	echo
 	echo "Instale o que falta e rode de novo. No Linux Mint/Ubuntu:"
-	echo "  sudo apt install build-essential linux-headers-$KREL python3-gi gir1.2-gtk-3.0"
+	echo "  sudo apt install dkms build-essential linux-headers-$KREL python3-gi gir1.2-gtk-3.0"
 	exit 1
 fi
 
 if [ "$MODO" != "--gui" ]; then
-	titulo "Compilando os módulos"
-	make -j"$(nproc)"
-
-	titulo "Instalando o driver"
+	titulo "Compilando e instalando o driver (DKMS)"
 	bash instalar.sh
 fi
 
